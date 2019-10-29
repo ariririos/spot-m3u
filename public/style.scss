@@ -3,16 +3,42 @@
  */
 
 $primary: hsl(240, 69%, 49%);
+$success: hsl(147, 69%, 49%);
+$error: hsl(0, 100%, 50%);
 
 /*
  * document
  */
 
 body {
+    margin: 0 auto;
+    max-width: 512px;
+
     font-family: sans-serif;
 }
 
 h1 {
     font-weight: 900;
     color: $primary;
+}
+
+table {
+    border-collapse: collapse;
+
+    td {
+        padding: 4px 8px;
+        border: solid thin black;
+    }
+}
+
+.error {
+    color: $error;
+}
+
+/*
+ * section
+ */
+
+.section {
+    margin: 64px 0;
 }

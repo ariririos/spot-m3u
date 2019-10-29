@@ -6,8 +6,49 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Spotify To M3U</title>
     <link rel="stylesheet" href="style.css">
+    <script src="app.js" defer></script>
 </head>
 <body>
-    <h1>Spotify To M3U</h1>
+    <header class="section">
+        <h1>Spotify To M3U</h1>
+        <p>This website converts a Spotify playlist into the M3U(8) format.</p>
+        <p class="error">Because of Spotify's API limitations only the first ~50 playlists will show and only the first ~100 tracks will be included in the playlist file. These issues will be fixed eventually. If you want to help check out the <a href="https://gitlab.com/lukasticky/spotify-to-m3u" target="_blank">repository</a>.</p>
+    </header>
+
+    <div class="section">
+        <p>1. Login with Spotify</p>
+        <div class="content">
+            <button id="login" disabled>Login</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <p>2. Specify the formatting of your MP3's</p>
+        <div class="content">
+            <input type="text" value="%artist% - %title%.mp3" placeholder="%artist% - %title%.mp3" disabled>
+            <p><i style="color: grey;">The formatting cannot be changed at the moment</i></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <p>3. Choose a playlist to download</p>
+        <div class="content" id="playlists">
+            <p><i style="color: grey;">You need to login first</i></p>
+        </div>
+    </div>
+
+    <div class="section">
+        <p>4. Wait for the conversion to complete</p>
+        <progress id="progress" value="0" max="0"></progress>
+    </div>
+
+    <div class="section">
+        <p>5. Download your playlist</p>
+        <a id="download-a"><button id="download-btn" disabled>Download <code>.M3U</code> file</button></a>
+    </div>
+
+    <footer class="section">
+
+    </footer>
 </body>
 </html>

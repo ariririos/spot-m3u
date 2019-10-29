@@ -5,11 +5,33 @@
  * document
  */
 body {
+  margin: 0 auto;
+  max-width: 512px;
   font-family: sans-serif;
 }
 
 h1 {
   font-weight: 900;
   color: #2727d3;
+}
+
+table {
+  border-collapse: collapse;
+}
+
+table td {
+  padding: 4px 8px;
+  border: solid thin black;
+}
+
+.error {
+  color: red;
+}
+
+/*
+ * section
+ */
+.section {
+  margin: 64px 0;
 }
 /*# sourceMappingURL=style.css.map */
