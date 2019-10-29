@@ -1,0 +1,18 @@
+/*
+ * vars
+ */
+
+$primary: hsl(240, 69%, 49%);
+
+/*
+ * document
+ */
+
+body {
+    font-family: sans-serif;
+}
+
+h1 {
+    font-weight: 900;
+    color: $primary;
+}
