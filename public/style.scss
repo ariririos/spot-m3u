@@ -3,6 +3,7 @@
  */
 
 $primary: hsl(240, 69%, 49%);
+$secondary: hsl(240, 100%, 94%);
 $success: hsl(147, 69%, 49%);
 $error: hsl(0, 100%, 50%);
 
@@ -10,13 +11,16 @@ $error: hsl(0, 100%, 50%);
  * document
  */
 
+html,
 body {
-    margin: 0 auto;
-    max-width: 512px;
+    overflow-x: hidden;
+}
+
+body {
+    margin: 0;
+    padding: 0 18px;
 
     font-family: "Source Sans Pro", sans-serif;
-
-    overflow-x: hidden;
 }
 
 h1 {
@@ -47,7 +51,7 @@ input {
 }
 
 button {
-    border: solid 1px lighten(lightgrey, 1.5);
+    border: solid 1px $secondary;
 }
 
 progress {
@@ -55,14 +59,14 @@ progress {
 
     appearance: none;
     color: $primary;
-    background-color: lightgrey;
+    background-color: $secondary;
     border: none;
     border-radius: 2px;
 
     overflow: hidden;
 
     &::-webkit-progress-bar {
-        background-color: lightgrey;
+        background-color: $secondary;
     }
 
     &::-moz-progress-bar,
@@ -94,7 +98,8 @@ table {
  */
 
 .section {
-    margin: 64px 16px;
+    margin: 64px auto;
+    max-width: 512px;
 
     & > p:first-of-type {
         font-weight: 600;
@@ -107,22 +112,14 @@ table {
                 font-weight: 600;
 
                 tr {
-                    background-color: lighten(lightgrey, 1.5);
+                    background-color: $secondary;
                 }
             }
             
             tr {
-                // button {
-                //     opacity: 0;
-                //     transition: opacity .1s ease;
-                // }
-
-                // &:hover button {
-                //     opacity: 1;
-                // }
 
                 &:nth-of-type(2n) {
-                    background-color: lighten(lightgrey, 1.5);
+                    background-color: $secondary;
                 }
             }
 

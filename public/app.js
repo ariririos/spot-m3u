@@ -108,141 +108,177 @@ function fetchPlaylists() {
     
     clog("Retrieving playlists...", 1)
 
-    let XHR = new XMLHttpRequest();
-    XHR.open("GET", `https://api.spotify.com/v1/me/playlists?client_id=${ encodeURIComponent(clientID) }&access_token=${ encodeURIComponent(token) }&limit=50`);
-    XHR.onreadystatechange = function() {
-        if (XHR.readyState === XMLHttpRequest.DONE) {
-            if (XHR.status === 200) {
-                
-                clog("Retrieved playlists", 2);
+    // create table
+    let table = document.createElement("table");
+    let tRow = table.createTHead().insertRow(0)
+    tRow.insertCell().textContent = "Name";
+    tRow.insertCell().textContent = "Tracks";
+    tRow.insertCell().textContent = "Convert to...";
+    let tBody = table.createTBody();
 
-                // get playlists
-                let response = JSON.parse(XHR.response);
+    // spotify limit
+    let stepLimit = 50;
 
-                // create table
-                let table = document.createElement("table");
-                let tRow = table.createTHead().insertRow(0)
-                tRow.insertCell().textContent = "Name";
-                tRow.insertCell().textContent = "Tracks";
-                tRow.insertCell().textContent = "Convert to...";
-                let tBody = table.createTBody();
+    // recursive function to fetch playlists
+    function fetchPaylistsRecursive(playlistOffset, playlistTotal) {
 
-                for (const playlist of response.items) {
+        let XHR = new XMLHttpRequest();
+        XHR.open("GET", `https://api.spotify.com/v1/me/playlists?client_id=${ encodeURIComponent(clientID) }&access_token=${ encodeURIComponent(token) }&offset=${ encodeURIComponent(playlistOffset) }&limit=${ encodeURIComponent(stepLimit) }`);
+        XHR.onreadystatechange = function() {
+            if (XHR.readyState === XMLHttpRequest.DONE) {
+                if (XHR.status === 200) {
                     
-                    let tRow = tBody.insertRow();
+                    // get playlists
+                    let response = JSON.parse(XHR.response);
+                    playlistTotal = response.total;
+                    clog(`Retrieved tracks ${ playlistOffset }-${ playlistOffset + stepLimit }`, 2);
+                    
+                    // populate table
+                    for (const playlist of response.items) {
+                        
+                        let tRow = tBody.insertRow();
+                        
+                        // name
+                        tRow.insertCell().textContent = playlist.name;
+                        
+                        // tracks
+                        tRow.insertCell().textContent = playlist.tracks.total;
+    
+                        // create convert buttons
+                        let btn1 = document.createElement("button");
+                        btn1.innerHTML = "<code>.M3U</code>";
+                        btn1.addEventListener("click", function() {
+                            convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u");
+                        });
+                        let btn2 = document.createElement("button");
+                        btn2.innerHTML = "<code>.M3U8</code>";
+                        btn2.addEventListener("click", function() {
+                            convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u8");
+                        });
+    
+                        // append convert btns
+                        let tCell = tRow.insertCell();
+                        tCell.appendChild(btn1);
+                        tCell.appendChild(btn2);
+                    }
+    
+                    // append table
+                    playlistsSecCont.children[0].remove();
+                    playlistsSecCont.appendChild(table);
 
-                    // name
-                    tRow.insertCell().textContent = playlist.name;
-
-                    // tracks
-                    tRow.insertCell().textContent = playlist.tracks.total;
-
-                    // create convert buttons
-                    let btn1 = document.createElement("button");
-                    btn1.innerHTML = "<code>.M3U</code>";
-                    btn1.addEventListener("click", function() {
-                        convertPlaylist(playlist.id, "m3u");
-                    });
-                    let btn2 = document.createElement("button");
-                    btn2.innerHTML = "<code>.M3U8</code>";
-                    btn2.addEventListener("click", function() {
-                        convertPlaylist(playlist.id, "m3u8");
-                    });
-
-                    // append convert btns
-                    let tCell = tRow.insertCell();
-                    tCell.appendChild(btn1);
-                    tCell.appendChild(btn2);
+                    if (playlistOffset + stepLimit < playlistTotal) {
+                        // call `fetchPaylistsRecursive(playlistOffset + stepLimit, playlistTotal)` again for the next batch
+                        fetchPaylistsRecursive(playlistOffset + stepLimit, playlistTotal)
+                    }
+    
+    
+                } else {
+                    alert("Something went wrong. Please login again")
+                    window.location = redirectURL;
                 }
-
-                // append table
-                playlistsSecCont.children[0].remove();
-                playlistsSecCont.appendChild(table);
-
-
-            } else {
-                alert("Something went wrong. Please login again")
-                window.location = redirectURL;
             }
-        }
-    };
-    XHR.send();
+        };
+        XHR.send();
+    }
+
+    // call `fetchPaylistsRecursive(tracksOffset, tracksTotal)` for the first time
+    fetchPaylistsRecursive(0, 0)
 }
 
 /*
  * convert playlist to M3U(8)
  */
 
-function convertPlaylist(id, type) {
+function convertPlaylist(id, playlistName, tracksTotal, type) {
 
     clog("Retrieving tracks...", 1)
     
-    let XHR = new XMLHttpRequest();
-    XHR.open("GET", `https://api.spotify.com/v1/playlists/${ encodeURIComponent(id) }?client_id=${ encodeURIComponent(clientID) }&access_token=${ encodeURIComponent(token) }`);
-    XHR.onreadystatechange = function() {
-        if (XHR.readyState === XMLHttpRequest.DONE) {
-            if (XHR.status === 200) {
+    // set progressbar max
+    progress.setAttribute("max", tracksTotal);
 
-                clog("Retrieved tracks", 2);
-                
-                // get tracks
-                let playlist = JSON.parse(XHR.response);
-                progress.setAttribute("max", playlist.tracks.total);
+    // create M3U file
+    let fileContent = "#EXTM3U\n";
 
-                // generate M3U
-                let fileContent = "#EXTM3U\n";
-                for (const item of playlist.tracks.items) {
+    // spotify limit
+    let stepLimit = 100;
+
+    // recursive function to fetch tracks
+    function fetchTracksRecursive(tracksOffset, tracksTotal) {
+        let XHR = new XMLHttpRequest();
+        XHR.open("GET", `https://api.spotify.com/v1/playlists/${ encodeURIComponent(id) }/tracks?client_id=${ encodeURIComponent(clientID) }&access_token=${ encodeURIComponent(token) }&offset=${ encodeURIComponent(tracksOffset) }&limit=${ encodeURIComponent(stepLimit) }`);
+        XHR.onreadystatechange = function() {
+            if (XHR.readyState === XMLHttpRequest.DONE) {
+                if (XHR.status === 200) {
                     
-                    if (type == "m3u") {
-
-                        // 1st line
-                        fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
-                            let artists = [];
-                            for (artist of item.track.artists) {
-                                artists.push(encodeURIComponent(artist.name));
-                            }
-                            return artists.join("; ");
-                        })()} - ${item.track.name}\n`;
-                        
-                        // 2nd line
-                        fileContent += `${ encodeURIComponent(item.track.artists[0].name) }%20-%20${ encodeURIComponent(item.track.name) }.mp3\n`;
-
-                    } else if (type == "m3u8") {
-
-                        // 1st line
-                        fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
-                            let artists = [];
-                            for (artist of item.track.artists) {
-                                artists.push(artist.name);
-                            }
-                            return artists.join("; ");
-                        })()} - ${item.track.name}\n`;
+                    // get tracks
+                    let playlist = JSON.parse(XHR.response);
+                    clog(`Retrieved tracks ${ tracksOffset }-${ tracksOffset + stepLimit }`, 2);
     
-                        // 2nd line
-                        fileContent += `${ item.track.artists[0].name } - ${ item.track.name }.mp3\n`;
+                    // populate M3U file
+                    for (const item of playlist.items) {
+                        
+                        if (type == "m3u") {
+    
+                            // 1st line
+                            fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
+                                let artists = [];
+                                for (artist of item.track.artists) {
+                                    artists.push(encodeURIComponent(artist.name));
+                                }
+                                return artists.join("; ");
+                            })()} - ${item.track.name}\n`;
+                            
+                            // 2nd line
+                            fileContent += `${ encodeURIComponent(item.track.artists[0].name) }%20-%20${ encodeURIComponent(item.track.name) }.mp3\n`;
+    
+                        } else if (type == "m3u8") {
+    
+                            // 1st line
+                            fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
+                                let artists = [];
+                                for (artist of item.track.artists) {
+                                    artists.push(artist.name);
+                                }
+                                return artists.join("; ");
+                            })()} - ${item.track.name}\n`;
+        
+                            // 2nd line
+                            fileContent += `${ item.track.artists[0].name } - ${ item.track.name }.mp3\n`;
+                        }
+    
+                        progress.value++;
                     }
 
-                    progress.value++;
-                }
-                let file = new Blob([fileContent], {type: type});
+                    clog(tracksOffset);
+                    if (tracksOffset >= tracksTotal) {
 
-                // prepare download
-                clog("Preparing download...", 1);
-                downloadBtn.disabled = false;
-                downloadA.download = `${ playlist.name }.${ type }`;
-                downloadA.href = URL.createObjectURL(file);
-                downloadBtn.innerHTML = `Download <code>${ playlist.name }.${ type.toUpperCase() }</code>`
+                        // create file
+                        let file = new Blob([fileContent], {type: type});
 
-                // initiate download
-                downloadA.click();
-                clog(`Downloaded file \`${ playlist.name }.${ type }\``, 2);
-
-            } else {
-                alert("Something went wrong. Please login again")
-                window.location = redirectURL;
-            }
-        }
-    };
-    XHR.send();
+                        // prepare download
+                        clog("Preparing download...", 1);
+                        downloadBtn.disabled = false;
+                        downloadA.download = `${ playlistName }.${ type }`;
+                        downloadA.href = URL.createObjectURL(file);
+                        downloadBtn.innerHTML = `Download <code>${ playlistName }.${ type.toUpperCase() }</code>`
+                        
+                        // initiate download
+                        downloadA.click();
+                        clog(`Downloaded file \`${ playlistName }.${ type }\``, 2);
+                    } else {
+                        // call `fetchTracksRecursive(tracksOffset, tracksTotal)` again for the next batch
+                        fetchTracksRecursive(tracksOffset + stepLimit, tracksTotal)
+                    }
     
+                } else {
+                    alert("Something went wrong. Please login again")
+                    window.location = redirectURL;
+                }
+            }
+        };
+        XHR.send();
+    }
+
+    // call `fetchTracksRecursive(tracksOffset, tracksTotal)` for the first time
+    fetchTracksRecursive(0, tracksTotal)
 }

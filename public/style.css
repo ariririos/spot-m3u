@@ -4,11 +4,15 @@
 /*
  * document
  */
+html,
 body {
-  margin: 0 auto;
-  max-width: 512px;
-  font-family: "Source Sans Pro", sans-serif;
   overflow-x: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0 18px;
+  font-family: "Source Sans Pro", sans-serif;
 }
 
 h1 {
@@ -40,7 +44,7 @@ input:not(:disabled) {
 }
 
 button {
-  border: solid 1px #d7d7d7;
+  border: solid 1px #e0e0ff;
 }
 
 progress {
@@ -49,14 +53,14 @@ progress {
      -moz-appearance: none;
           appearance: none;
   color: #2727d3;
-  background-color: lightgrey;
+  background-color: #e0e0ff;
   border: none;
   border-radius: 2px;
   overflow: hidden;
 }
 
 progress::-webkit-progress-bar {
-  background-color: lightgrey;
+  background-color: #e0e0ff;
 }
 
 progress::-moz-progress-bar, progress::-webkit-progress-value {
@@ -85,7 +89,8 @@ table button {
  * section
  */
 .section {
-  margin: 64px 16px;
+  margin: 64px auto;
+  max-width: 512px;
 }
 
 .section > p:first-of-type {
@@ -97,11 +102,11 @@ table button {
 }
 
 .section #playlists table thead tr {
-  background-color: #d7d7d7;
+  background-color: #e0e0ff;
 }
 
 .section #playlists table tr:nth-of-type(2n) {
-  background-color: #d7d7d7;
+  background-color: #e0e0ff;
 }
 
 .section #playlists table td {
