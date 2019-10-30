@@ -7,21 +7,74 @@
 body {
   margin: 0 auto;
   max-width: 512px;
-  font-family: sans-serif;
+  font-family: "Source Sans Pro", sans-serif;
+  overflow-x: hidden;
 }
 
 h1 {
   font-weight: 900;
+}
+
+p {
+  line-height: 1.5;
+}
+
+a {
   color: #2727d3;
 }
 
+code {
+  font-weight: 600;
+}
+
+button,
+input {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 2px;
+}
+
+button:not(:disabled),
+input:not(:disabled) {
+  cursor: pointer;
+}
+
+button {
+  border: solid 1px #d7d7d7;
+}
+
+progress {
+  width: 100%;
+  -webkit-appearance: none;
+     -moz-appearance: none;
+          appearance: none;
+  color: #2727d3;
+  background-color: lightgrey;
+  border: none;
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+progress::-webkit-progress-bar {
+  background-color: lightgrey;
+}
+
+progress::-moz-progress-bar, progress::-webkit-progress-value {
+  background-color: #2727d3;
+}
+
 table {
+  width: 100%;
   border-collapse: collapse;
 }
 
 table td {
   padding: 4px 8px;
   border: solid thin black;
+}
+
+table button {
+  margin: 4px;
 }
 
 .error {
@@ -32,6 +85,58 @@ table td {
  * section
  */
 .section {
-  margin: 64px 0;
+  margin: 64px 16px;
+}
+
+.section > p:first-of-type {
+  font-weight: 600;
+}
+
+.section #playlists table thead {
+  font-weight: 600;
+}
+
+.section #playlists table thead tr {
+  background-color: #d7d7d7;
+}
+
+.section #playlists table tr:nth-of-type(2n) {
+  background-color: #d7d7d7;
+}
+
+.section #playlists table td {
+  border: none;
+}
+
+.section #playlists table td:nth-of-type(2) {
+  text-align: right;
+}
+
+/*
+ * header
+ */
+header h1 {
+  position: relative;
+  padding-bottom: 32px;
+  color: white;
+  background-color: #2727d3;
+}
+
+header h1::before {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: -450%;
+  width: 1000%;
+  height: 1000%;
+  background-color: #2727d3;
+  z-index: -1;
+}
+
+/*
+ * footer
+ */
+footer {
+  font-size: .8rem;
 }
 /*# sourceMappingURL=style.css.map */

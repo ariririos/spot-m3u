@@ -14,20 +14,74 @@ body {
     margin: 0 auto;
     max-width: 512px;
 
-    font-family: sans-serif;
+    font-family: "Source Sans Pro", sans-serif;
+
+    overflow-x: hidden;
 }
 
 h1 {
     font-weight: 900;
+}
+
+p {
+    line-height: 1.5;
+}
+
+a {
     color: $primary;
 }
 
+code {
+    font-weight: 600;
+}
+
+button,
+input {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 2px;
+
+    &:not(:disabled) {
+        cursor: pointer;
+    }
+}
+
+button {
+    border: solid 1px lighten(lightgrey, 1.5);
+}
+
+progress {
+    width: 100%;
+
+    appearance: none;
+    color: $primary;
+    background-color: lightgrey;
+    border: none;
+    border-radius: 2px;
+
+    overflow: hidden;
+
+    &::-webkit-progress-bar {
+        background-color: lightgrey;
+    }
+
+    &::-moz-progress-bar,
+    &::-webkit-progress-value {
+        background-color: $primary;
+    }
+}
+
 table {
+    width: 100%;
     border-collapse: collapse;
 
     td {
         padding: 4px 8px;
         border: solid thin black;
+    }
+
+    button {
+        margin: 4px;
     }
 }
 
@@ -40,5 +94,83 @@ table {
  */
 
 .section {
-    margin: 64px 0;
+    margin: 64px 16px;
+
+    & > p:first-of-type {
+        font-weight: 600;
+    }
+
+    #playlists {
+        table {
+
+            thead {
+                font-weight: 600;
+
+                tr {
+                    background-color: lighten(lightgrey, 1.5);
+                }
+            }
+            
+            tr {
+                // button {
+                //     opacity: 0;
+                //     transition: opacity .1s ease;
+                // }
+
+                // &:hover button {
+                //     opacity: 1;
+                // }
+
+                &:nth-of-type(2n) {
+                    background-color: lighten(lightgrey, 1.5);
+                }
+            }
+
+            td {
+                border: none;
+
+                &:nth-of-type(2) {
+                    text-align: right;
+                }
+            }
+        }
+    }
+}
+
+/*
+ * header
+ */
+
+header {
+    h1 {
+        position: relative;
+        
+        padding-bottom: 32px;
+
+        color: white;
+        background-color: $primary;
+
+        &::before {
+            content: "";
+
+            position: absolute;
+            bottom: 0;
+            left: -450%;
+
+            width: 1000%;
+            height: 1000%;
+
+            background-color: $primary;
+
+            z-index: -1;
+        }
+    }
+}
+
+/*
+ * footer
+ */
+
+footer {
+    font-size: .8rem;
 }
