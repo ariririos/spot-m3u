@@ -5,7 +5,7 @@
 // API
 
 let clientID = "16dcb564d8274f44a41c86b4093c5d02"; // please create your own Spotify ID when using this project (https://developer.spotify.com/dashboard)
-let redirectURL = "https://aririos.com/spot-m3u";
+let redirectURL = "https://aririos.com/spot-m3u/";
 
 if (location.hostname == "localhost" || location.hostname == "127.0.0.1") {
     redirectURL = "http://127.0.0.1:8000/public/";
