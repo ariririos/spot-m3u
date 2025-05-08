@@ -4,7 +4,7 @@
 
 // API
 
-let clientID = "16dcb564d8274f44a41c86b4093c5d02"; // please create your own Spotify ID when using this project (https://developer.spotify.com/dashboard)
+const clientID = "16dcb564d8274f44a41c86b4093c5d02"; // please create your own Spotify ID when using this project (https://developer.spotify.com/dashboard)
 let redirectURL = "https://aririos.com/spot-m3u/public";
 
 if (location.hostname == "localhost" || location.hostname == "127.0.0.1") {
@@ -13,11 +13,11 @@ if (location.hostname == "localhost" || location.hostname == "127.0.0.1") {
 
 // elements
 
-let loginBtn = document.getElementById("login");
-let playlistsSecCont = document.getElementById("playlists");
-let progress = document.getElementById("progress");
-let downloadA = document.getElementById("download-a");
-let downloadBtn = document.getElementById("download-btn");
+const loginBtn = document.getElementById("login");
+const playlistsSecCont = document.getElementById("playlists");
+const progress = document.getElementById("progress");
+const downloadA = document.getElementById("download-a");
+const downloadBtn = document.getElementById("download-btn");
 
 /*
  * dev logging
@@ -126,36 +126,145 @@ if (code) {
         const body = await fetch(url, payload);
         const response = await body.json();
       
-        localStorage.setItem('access_token', response.access_token);
-        console.log('Logged in');
+        if (response.error === 'invalid_grant') {
+            loginBtn.disabled = false;
+        }
+        else {
+            localStorage.setItem('access_token', response.access_token);
+            console.log('Logged in');
+        }
+        if (response.refresh_token) {
+            localStorage.setItem('refresh_token', response.refresh_token);
+            console.log('refresh token set');
+        }
       };
-    if (!localStorage.getItem('access_token')) {
+    try {
         await getToken(code);
+    }
+    catch (e) {
+        console.log('error at code -> getToken');
     }
 }
 
 // already logged in?
+const getRefreshToken = async() => {
+    // refresh token that has been previously stored
+    const refreshToken = localStorage.getItem('refresh_token');
+    const url = "https://accounts.spotify.com/api/token";
+ 
+    const payload = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({
+            grant_type: 'refresh_token',
+            refresh_token: refreshToken,
+            client_id: clientID
+        }),
+    }
+    const body = await fetch(url, payload);
+    const response = await body.json();
+ 
+    localStorage.setItem('access_token', response.access_token);
+    if (response.refresh_token) {
+        localStorage.setItem('refresh_token', response.refresh_token);
+        console.log('refresh token set');
+    }
+}
+await getRefreshToken();
 
 async function getEndpoint(endpoint) {
     let accessToken = localStorage.getItem('access_token');
-    
-    const response = await fetch(endpoint, {
-        headers: {
-        Authorization: 'Bearer ' + accessToken
+    let response;
+    try {
+        response = await fetch(endpoint, {
+            headers: {
+            Authorization: 'Bearer ' + accessToken
+            }
+        });
+
+        // got logged out
+        if (response.status == 401) {
+            loginBtn.disabled = false;
         }
-    });
-    
+
+    }
+    catch (e) {
+        throw e;
+    }
     const data = await response.json();
     return data;
 }
 if (localStorage.getItem('access_token')) {
-    let { id } = await getEndpoint('https://api.spotify.com/v1/me');
-    console.log('Logged in as ' + id);
+    loginBtn.innerText = "Logging in...";
+    try {
+        let { id } = await getEndpoint('https://api.spotify.com/v1/me');
+        console.log('Logged in as ' + id);
+        loginBtn.innerText = "Logged in";
+    }
+    catch (e) {
+        loginBtn.innerText = "Login error!";
+        loginBtn.disabled = false;
+        console.error(e);
+    }
 }
 else {
+    loginBtn.innerText = "Login";
     loginBtn.disabled = false;
 }
 
+/*
+ * view playlist
+ */
+let viewOpen = false;
+
+async function viewPlaylist(id, tracksTotal) {
+    const viewBtn = document.querySelector(`[data-id="${id}"]`);
+    if (!viewOpen) {
+        const stepLimit = 100;
+        const containingRow = viewBtn.closest('tr');
+        const header = document.createElement('tr');
+        header.innerHTML = "<td>Track name</td><td>=</td><td>Spotify URI</td>";
+        header.dataset.attachedTo = id;
+        containingRow.insertAdjacentElement('afterend', header);
+        viewOpen = true;
+        async function viewPlaylistRecursive(tracksOffset, tracksTotal) {
+            const playlist = await getEndpoint(
+                'https://api.spotify.com/v1/playlists/' + encodeURIComponent(id) + '/tracks' +
+                '?client_id='+ encodeURIComponent(clientID) +
+                '&offset=' + encodeURIComponent(tracksOffset) +
+                '&limit=' + encodeURIComponent(stepLimit)
+            );
+            
+            for (const item of playlist.items) {
+                const tr = document.createElement('tr');
+                tr.dataset.attachedTo = id;
+                tr.innerHTML = `
+                <td>${item.track.name}</td>
+                <td>=</td>
+                <td>${item.track.uri}</td>
+                `;
+                header.insertAdjacentElement('afterend', tr);
+            }
+            if (tracksOffset + stepLimit < tracksTotal) {
+                await viewPlaylistRecursive(tracksOffset + stepLimit, tracksTotal);
+            }
+            else {
+                viewBtn.innerHTML = "<code>CLOSE VIEW</code>";
+            }
+        }
+        await viewPlaylistRecursive(0, tracksTotal);
+    }
+    else {
+        const innerTable = document.querySelectorAll(`[data-attached-to="${id}"]`);
+        for (let row of innerTable) {
+            row.remove();
+        }
+        viewBtn.innerHTML = "<code>VIEW TRACKS</code>";
+        viewOpen = false;
+    }
+}
 /*
  * fetch playlists
  */
@@ -198,19 +307,23 @@ async function fetchPlaylists() {
             // create convert buttons
             let btn1 = document.createElement("button");
             btn1.innerHTML = "<code>.M3U</code>";
-            btn1.addEventListener("click", function() {
-                convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u");
-            });
+            btn1.addEventListener("click", () => convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u"));
             let btn2 = document.createElement("button");
             btn2.innerHTML = "<code>.M3U8</code>";
-            btn2.addEventListener("click", function() {
-                convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u8");
-            });
-
+            btn2.addEventListener("click", () => convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "m3u8"));
+            let btn3 = document.createElement("button");
+            btn3.innerHTML = "<code>.TXT</code>";
+            btn3.addEventListener("click", () => convertPlaylist(playlist.id, playlist.name, playlist.tracks.total, "txt"));
+            let btn4 = document.createElement('button');
+            btn4.innerHTML = "<code>VIEW TRACKS</code>";
+            btn4.dataset.id = playlist.id;
+            btn4.addEventListener("click", () => viewPlaylist(playlist.id, playlist.tracks.total));
             // append convert btns
             let tCell = tRow.insertCell();
             tCell.appendChild(btn1);
             tCell.appendChild(btn2);
+            tCell.appendChild(btn3);
+            tCell.appendChild(btn4);
         }
 
         // append table
@@ -239,8 +352,11 @@ async function convertPlaylist(id, playlistName, tracksTotal, type) {
     // set progressbar max
     progress.setAttribute("max", tracksTotal);
 
+    let fileContent = "";
     // create M3U file
-    let fileContent = "#EXTM3U\n";
+    if (type !== "txt") {
+        fileContent += "#EXTM3U\n";
+    }
 
     // spotify limit
     let stepLimit = 100;
@@ -254,7 +370,6 @@ async function convertPlaylist(id, playlistName, tracksTotal, type) {
             '&limit=' + encodeURIComponent(stepLimit)
         );
 
-                    
         clog(`Retrieved tracks ${ tracksOffset }-${ tracksOffset + stepLimit }`, 2);
 
         // populate M3U file
@@ -263,30 +378,36 @@ async function convertPlaylist(id, playlistName, tracksTotal, type) {
             if (type == "m3u") {
 
                 // 1st line
-                fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
-                    let artists = [];
-                    for (let artist of item.track.artists) {
-                        artists.push(encodeURIComponent(artist.name));
-                    }
-                    return artists.join("; ");
-                })()} - ${item.track.name}\n`;
+                // fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
+                //     let artists = [];
+                //     for (let artist of item.track.artists) {
+                //         artists.push(encodeURIComponent(artist.name));
+                //     }
+                //     return artists.join("; ");
+                // })()} - ${item.track.name}\n`;
                 
                 // 2nd line
-                fileContent += `${ encodeURIComponent(item.track.artists[0].name) }%20-%20${ encodeURIComponent(item.track.name) }.mp3\n`;
+                fileContent +=
+                    item.track.artists[0].name + '/'+
+                    item.track.album.name + '/' +
+                    item.track.artists[0].name + ' - ' + item.track.name + '.ogg\n';
 
             } else if (type == "m3u8") {
 
                 // 1st line
-                fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
-                    let artists = [];
-                    for (let artist of item.track.artists) {
-                        artists.push(artist.name);
-                    }
-                    return artists.join("; ");
-                })()} - ${item.track.name}\n`;
+                // fileContent += `#EXTINF:${Math.floor(item.track.duration_ms / 1000)},${ (function() {
+                //     let artists = [];
+                //     for (let artist of item.track.artists) {
+                //         artists.push(artist.name);
+                //     }
+                //     return artists.join("; ");
+                // })()} - ${item.track.name}\n`;
 
                 // 2nd line
-                fileContent += `${ item.track.artists[0].name } - ${ item.track.name }.mp3\n`;
+                // fileContent += `${ item.track.artists[0].name } - ${ item.track.name }.mp3\n`;
+            }
+            else if (type == "txt") {
+                fileContent += item.track.uri + '\n';
             }
 
             progress.value++;
@@ -319,3 +440,4 @@ async function convertPlaylist(id, playlistName, tracksTotal, type) {
 }
 
 await fetchPlaylists();
+
